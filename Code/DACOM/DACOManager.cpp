@@ -2,6 +2,8 @@
 #include "DACOManager.h"
 #include <tchar.h>
 
+#include <filesystem>
+
 //--------------------------------------------------------------------------//
 //---------------------------DACOManager Methods----------------------------//
 //--------------------------------------------------------------------------//
@@ -333,6 +335,8 @@ GENRESULT DACOManager::EnumerateComponents(const C8* interface_name, //)
 //
 GENRESULT DACOManager::AddLibrary(const C8* DLL_filename)
 {
+	SetDefaultDllDirectories(LOAD_LIBRARY_SEARCH_DEFAULT_DIRS | LOAD_LIBRARY_SEARCH_USER_DIRS);
+
 	C8        buffer[MAX_PATH + 8];
 	C8* ptr;
 	S32       len;
@@ -374,7 +378,7 @@ GENRESULT DACOManager::AddLibrary(const C8* DLL_filename)
 	registration_cnt = 0;
 	pCurrentLibrary = library;
 
-	if ((library->instance = LoadLibraryA(DLL_filename)) == NULL) {
+	if ((library->instance = LoadLibraryExA(DLL_filename, nullptr, LOAD_LIBRARY_SEARCH_DEFAULT_DIRS | LOAD_LIBRARY_SEARCH_USER_DIRS)) == nullptr) {
 		GENERAL_NOTICE(TEMPSTR("DACOM: AddLibrary: Unable to load DLL '%s', ignoring...\n", DLL_filename));
 	}
 	else {
@@ -390,14 +394,8 @@ GENRESULT DACOManager::AddLibrary(const C8* DLL_filename)
 
 	pCurrentLibrary = 0;
 
-	if ((library->instance == NULL) ||
-		(registration_cnt == 0))
+	if (library->instance == nullptr)
 	{
-		if (library->instance != NULL)
-		{
-			FreeLibrary(library->instance);
-		}
-
 		library_list.free(library);
 		return GR_GENERIC;
 	}
@@ -710,6 +708,61 @@ BOOL32 DACOManager::initialize(void)
 	if (initialized == 0)
 	{
 		HANDLE hSection;
+
+		if ((hSection = parser->CreateSection("DACOM")) != nullptr)
+		{
+			GENERAL_TRACE_1("DACOM: initialize: Loading DACOM settings via [DACOM] section.\n");
+			unsigned line = 0;
+			char buffer[MAX_PATH];
+			while (parser->ReadProfileLine(hSection, line++, buffer, sizeof(buffer)) != 0)
+			{
+				char* ptr;
+
+				ptr = buffer;
+				while (*ptr == ' ')
+				{
+					ptr++;
+				}
+
+				constexpr auto iniKey = "dll_search_path";
+				if (strncmp(ptr, iniKey, strlen(iniKey)) != 0)
+				{
+					continue;
+				}
+
+				ptr += strlen(iniKey);
+				while (*ptr == ' ')
+				{
+					ptr++;
+				}
+
+				if (*ptr != '=')
+				{
+					continue;
+				}
+
+				ptr++;
+				while (*ptr == ' ')
+				{
+					ptr++;
+				}
+
+				switch (*ptr)
+				{
+					case 0:
+					case '#':
+					case ';': break; // do nothing
+					default:
+					{
+						auto dir = std::filesystem::absolute(ptr);
+						GENERAL_TRACE_1(
+							TEMPSTR("DACOM: Adding DLL Path '%s' ...\n", dir.string().c_str()));
+						AddDllDirectory(dir.wstring().c_str());
+					}
+					break;
+				} // end switch
+			} // end while
+		}
 
 		if ((hSection = parser->CreateSection("Libraries")) == 0)
 		{
