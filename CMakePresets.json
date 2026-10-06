@@ -1,0 +1,86 @@
+{
+    "version": 6,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 23,
+        "patch": 0
+    },
+    "configurePresets": [
+        {
+            "name": "common",
+            "hidden": true,
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+            }
+        },
+        {
+            "name": "windows-common",
+            "hidden": true,
+            "inherits": "common",
+            "architecture": {
+                "value": "x86",
+                "strategy": "external"
+            },
+            "generator": "Visual Studio 18 2026",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
+            },
+            "toolset": "ClangCL",
+            "cacheVariables": {
+                "IS_WINDOWS": true,
+                "IS_LINUX": false
+            }
+        },
+        {
+            "name": "linux-common",
+            "hidden": true,
+            "inherits": "common",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Linux"
+            },
+            "generator": "Ninja",
+            "cacheVariables": {
+                "IS_WINDOWS": false,
+                "IS_LINUX": true,
+                "CMAKE_TOOLCHAIN_FILE": "${fileDir}/CMake/Toolchains/LinuxClangCl.cmake"
+            }
+        },
+        {
+            "name": "windows-clang-debug",
+            "displayName": "Windows / Clang / Debug",
+            "inherits": "windows-common",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "windows-clang-relwithdebinfo",
+            "displayName": "Windows / Clang / RelWithDebInfo",
+            "inherits": "windows-common",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+            }
+        },
+        {
+            "name": "linux-clang-wine-debug",
+            "displayName": "Linux / Clang / Debug",
+            "inherits": "linux-common",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "linux-clang-wine-relwithdebinfo",
+            "displayName": "Linux / Clang / RelWithDebInfo",
+            "inherits": "linux-common",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+            }
+        }
+    ]
+}
