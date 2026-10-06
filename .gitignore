@@ -1,11 +1,24 @@
-/Build
-/Dlls
-/Exe
-/Data
+*.aps
+
+# IDEs
+.vs/
+.code/
+.idea/
+*.sln
+*.slnx
+
+# Build Dirs
+cmake-*/
+[Bb]uild/
+[Dd]lls/
+[Ee][Xx][Ee]/
+
+# RE
+*.idb
+*.i64
+
+# Other
+/[Dd][Aa][Tt][Aa]
 /Tools
 /IDB
 /Vanilla
-*.sln
-*.aps
-.vs
-$Liberty.slnx
