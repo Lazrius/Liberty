@@ -1,7 +1,12 @@
 # CMake minimum version
 cmake_minimum_required(VERSION 3.31)
 
-# Set the project name (change as needed)
+# Safety catch if running directly, assume we are running on Windows
+if (NOT DEFINED IS_WINDOWS)
+    set(IS_WINDOWS TRUE)
+    set(IS_LINUX FALSE)
+endif()
+
 if (IS_WINDOWS)
     project(Liberty LANGUAGES C CXX ASM_MASM CSharp)
 else ()
